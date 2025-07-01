@@ -57,14 +57,21 @@ class AsyncPowerPointToJiraProcessor:
         
         with temp_workdir(pptx_path, self.config.debug) as workdir:
             try:
-                # Step 1: Find issue slides (synchronous)
+                # Step 1: Find issue slides with project determination (synchronous)
                 issue_slides = list(self.slide_detector.find_issue_slides(pptx_path))
                 if not issue_slides:
                     logger.info("No issue slides found")
                     return results
                 
-                issue_slide_numbers = [idx for idx, _ in issue_slides]
+                # Extract slide numbers and project mappings
+                slide_project_mapping = {}
+                issue_slide_numbers = []
+                for idx, slide, project_key in issue_slides:
+                    issue_slide_numbers.append(idx)
+                    slide_project_mapping[idx] = project_key
+                
                 logger.info(f"Found {len(issue_slide_numbers)} issue slides: {issue_slide_numbers}")
+                logger.info(f"Project mapping: {slide_project_mapping}")
                 
                 # Step 2: Convert to PDF (synchronous)
                 pdf_path = self.pdf_converter.convert_to_pdf(pptx_path, workdir)
@@ -78,7 +85,7 @@ class AsyncPowerPointToJiraProcessor:
                 logger.info("Starting parallel AI analysis...")
                 start_time = asyncio.get_event_loop().time()
                 
-                analyses = await self.ai_analyzer.analyze_slides_batch(slide_images)
+                analyses = await self.ai_analyzer.analyze_slides_batch(slide_images, slide_project_mapping)
                 
                 analysis_time = asyncio.get_event_loop().time() - start_time
                 logger.info(f"Completed AI analysis in {analysis_time:.2f} seconds")

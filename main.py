@@ -31,6 +31,7 @@ def print_results(results: List[SlideAnalysis], dry_run: bool = False):
     for result in results:
         print(f"\n{'='*60}")
         print(f"Slide {result.slide_number}: {result.title}")
+        print(f"Project: {result.project_key}")
         print(f"Priority: {result.priority}")
         print(f"Type: {result.issue_type}")
         if not dry_run and result.jira_key:
@@ -50,7 +51,7 @@ def create_argument_parser():
     parser.add_argument("--debug", action="store_true",
                        help="Keep temporary PDF and image files for debugging")
     parser.add_argument("-p", "--project-key", 
-                       help="Jira project key (overrides JIRA_PROJECT_KEY from .env)")
+                       help="Jira project key (overrides JIRA_PROJECT_KEY from .env and disables AI project determination)")
     parser.add_argument("-t", "--max-concurrent", type=int, default=MAX_CONCURRENT_REQUESTS,
                        help=f"Maximum concurrent API requests (default: {MAX_CONCURRENT_REQUESTS})")
     
@@ -74,7 +75,13 @@ async def async_main():
         
         if args.project_key:
             config.project_key = args.project_key
-            logger.info(f"Using project key from command line: {args.project_key}")
+            logger.info(f"Using manual project key from command line: {args.project_key}")
+            logger.info("Rule-based project determination disabled due to manual override")
+        elif config.project_key:
+            logger.info(f"Using manual project key from environment: {config.project_key}")
+            logger.info("Rule-based project determination disabled due to manual override")
+        else:
+            logger.info("No manual project key specified - using rule-based project determination")
         
         if args.dry_run:
             logger.info("DRY RUN MODE - No issues will be created")

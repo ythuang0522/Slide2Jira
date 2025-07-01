@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import dataclass
+from typing import Optional
 from dotenv import load_dotenv
 
 # Image processing constants
@@ -20,22 +21,36 @@ MAX_CONCURRENT_REQUESTS = 5
 
 # Issue detection patterns
 ISSUE_PATTERNS = [
-    r"(?i)^issue:",           # "Issue:" prefix (case-insensitive)
-    r"(?i)^(bug):"            # "Bug:" prefix (case-insensitive)
+    r"(?i)(?:^|\n)issue:",           # "Issue:" at start of line (case-insensitive)
+    r"(?i)(?:^|\n)(bug):",           # "Bug:" at start of line (case-insensitive)
+    r"(?i)(?:^|\n)db issue:",        # "DB issue:" at start of line (case-insensitive)
+    r"(?i)(?:^|\n)coj issue:",        # "DB issue:" at start of line (case-insensitive)
+
 ]
+
+# Rule-based project mapping for specific issue patterns
+ISSUE_PROJECT_RULES = {
+    r"(?i)(?:^|\n)db issue:": "DB",
+    r"(?i)(?:^|\n)issue:": "AP",      # Explicit rule
+    r"(?i)(?:^|\n)(bug):": "AP",      # Explicit rule
+    r"(?i)(?:^|\n)coj issue:": "COJ",      # Explicit rule
+}
+
+# Default project key for issues that don't match any specific rules
+DEFAULT_PROJECT_KEY = "AP"
 
 
 @dataclass
 class ProcessingConfig:
     """Configuration for the processing pipeline."""
-    # Jira settings
+    # Jira settings (required)
     base_url: str
     email: str
     api_token: str
-    project_key: str
-    
-    # OpenAI settings
     openai_api_key: str
+    
+    # Optional settings with defaults
+    project_key: Optional[str] = None  # Now optional - rules determine if not specified
     openai_model: str = DEFAULT_OPENAI_MODEL
     
     # Processing settings
@@ -54,7 +69,7 @@ class ProcessingConfig:
             'base_url': os.getenv('JIRA_BASE_URL'),
             'email': os.getenv('JIRA_EMAIL'),
             'api_token': os.getenv('JIRA_API_TOKEN'),
-            'project_key': os.getenv('JIRA_PROJECT_KEY'),
+            'project_key': os.getenv('JIRA_PROJECT_KEY'),  # Can be None
             'openai_api_key': os.getenv('OPENAI_API_KEY'),
             'openai_model': os.getenv('OPENAI_MODEL', DEFAULT_OPENAI_MODEL),
             'max_image_size_mb': float(os.getenv('MAX_IMAGE_SIZE_MB', DEFAULT_MAX_IMAGE_SIZE_MB)),
@@ -62,8 +77,8 @@ class ProcessingConfig:
             'max_concurrent_requests': int(os.getenv('MAX_CONCURRENT_REQUESTS', MAX_CONCURRENT_REQUESTS))
         }
         
-        # Validate required config
-        required_keys = ['base_url', 'email', 'api_token', 'project_key', 'openai_api_key']
+        # Validate required config (project_key now optional)
+        required_keys = ['base_url', 'email', 'api_token', 'openai_api_key']
         missing = [k for k in required_keys if not config_dict.get(k)]
         if missing:
             raise ValueError(f"Missing required environment variables: {missing}")

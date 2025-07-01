@@ -26,9 +26,13 @@ class AsyncJiraClient:
         labels = list(analysis.labels)  # Copy to avoid modifying original
         labels.append(f"slide-{analysis.slide_number}")
         
+        # Validate project key is set
+        if not analysis.project_key:
+            raise ValueError(f"No project key specified for slide {analysis.slide_number}")
+        
         payload = {
             "fields": {
-                "project": {"key": self.config.project_key},
+                "project": {"key": analysis.project_key},  # Use per-analysis project key
                 "issuetype": {"name": analysis.issue_type},
                 "summary": analysis.title[:200],
                 "description": self._create_adf_content(analysis.description),
@@ -46,11 +50,11 @@ class AsyncJiraClient:
                 response.raise_for_status()
                 result = await response.json()
                 issue_key = result['key']
-                logger.info(f"Created Jira issue {issue_key} for slide {analysis.slide_number}")
+                logger.info(f"Created Jira issue {issue_key} in project {analysis.project_key} for slide {analysis.slide_number}")
                 return issue_key
                 
         except aiohttp.ClientError as e:
-            logger.error(f"Error creating Jira issue for slide {analysis.slide_number}: {e}")
+            logger.error(f"Error creating Jira issue for slide {analysis.slide_number} in project {analysis.project_key}: {e}")
             raise
     
     async def attach_image(self, issue_key: str, image_path: str, session: aiohttp.ClientSession):

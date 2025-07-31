@@ -1,7 +1,6 @@
 # PowerPoint to Jira Issues - AI Enhanced Converter
 
-This tool automatically detects issues mentioned in slides in PowerPoint presentations and creates Jira issues using AI-powered content analysis. 
-
+This tool automatically detects issues mentioned in slides in PowerPoint and creates Jira issues using ChatGPT. 
 
 ## 🎯 Rule-Based Project Classification
 
@@ -23,13 +22,13 @@ When `JIRA_PROJECT_KEY` is not specified, the system uses simple text pattern ma
 
 ```bash
 # Dry run to preview what would be created
-python main.py presentation.pptx -d
+python main.py YTH\ Slides/presentation.pptx -d
 
 # Create actual Jira issues
-python main.py presentation.pptx
+python main.py YTH\ Slides/presentation.pptx
 
 # Use a specific project key (disables rule-based project determination)
-python main.py presentation.pptx --project-key DB
+python main.py YTH\ Slides/presentation.pptx --project-key DB
 ```
 
 ### Command Line Options

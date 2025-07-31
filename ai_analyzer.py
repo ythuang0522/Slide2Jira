@@ -140,14 +140,16 @@ Given a slide image, extract the following information for creating a Jira issue
 
 1. **Title**: 簡潔的繁體中文標題描述問題，100字以內**.
 2. **Description**: 完整的描述問題，包含:
-   - What the problem is
-   - Any visible data, metrics, or evidence related to the issue
-   - Context or background information related to the issue
-   - Any proposed solutions or next steps mentioned
+   - What the problem is. 
+   - The slide may contain several issues. The primary issue is the sentence containing "Issue" or "Bug".
+   - Any visible data, metrics, or evidence related to the primary issue
+   - Context or background information related to the primary issue
+   - Any proposed solutions or next steps mentioned related to the primary issue
    - Sample ID and Chip ID if available
+   - Any other information that is relevant to the primary issue
    **務必用繁體中文輸出描述，英文縮寫和專有名詞可保留英文**.
 
-3. **Priority**: Estimate priority of the issue (Medium/Low), if not clear, use **Medium**.
+3. **Priority**: the priority of the issue (Medium/Low) if mentioned. If not mentioned, use **Medium**.
 4. **Issue Type**: Categorize as Bug or Task based on content, if not clear, use Task as default.
 5. **Labels**: Add upto two most relevant labels to the issue.
 
@@ -158,7 +160,7 @@ Format your response as JSON:
 {
   "title": "簡潔的問題標題（繁體中文）",
   "description": "詳細的問題描述（繁體中文，使用markdown格式）",
-  "priority": "High|Medium|Low", 
+  "priority": "Medium|Low", 
   "issue_type": "Bug|Task",
   "labels": ["label1", "label2"]
 }

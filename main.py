@@ -46,9 +46,9 @@ def create_argument_parser():
         description="Convert PowerPoint issues to Jira tickets using AI analysis"
     )
     parser.add_argument("pptx_file", help="Path to the PowerPoint file")
-    parser.add_argument("--dry-run", action="store_true",
+    parser.add_argument("-d", "--dry-run", action="store_true",
                        help="Show what would be created without actually creating issues")
-    parser.add_argument("--debug", action="store_true",
+    parser.add_argument("-v", "--debug", action="store_true",
                        help="Keep temporary PDF and image files for debugging")
     parser.add_argument("-p", "--project-key", 
                        help="Jira project key (overrides JIRA_PROJECT_KEY from .env and disables AI project determination)")

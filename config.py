@@ -12,7 +12,7 @@ DEFAULT_IMAGE_SCALE = 1.5
 MIN_JPEG_QUALITY = 60
 
 # OpenAI constants
-DEFAULT_OPENAI_MODEL = 'gpt-4o'
+DEFAULT_OPENAI_MODEL = 'gpt-4.1'
 DEFAULT_TIMEOUT = 30
 
 # Processing constants
@@ -24,8 +24,8 @@ ISSUE_PATTERNS = [
     r"(?i)(?:^|\n)issue:",           # "Issue:" at start of line (case-insensitive)
     r"(?i)(?:^|\n)(bug):",           # "Bug:" at start of line (case-insensitive)
     r"(?i)(?:^|\n)db issue:",        # "DB issue:" at start of line (case-insensitive)
-    r"(?i)(?:^|\n)coj issue:",        # "DB issue:" at start of line (case-insensitive)
-
+    r"(?i)(?:^|\n)coj issue:",        # "Cojudge issue:" at start of line (case-insensitive)
+    r"(?i)(?:^|\n)aj issue:",        # "Autojudge issue:" at start of line (case-insensitive)
 ]
 
 # Rule-based project mapping for specific issue patterns
@@ -34,6 +34,7 @@ ISSUE_PROJECT_RULES = {
     r"(?i)(?:^|\n)issue:": "AP",      # Explicit rule
     r"(?i)(?:^|\n)(bug):": "AP",      # Explicit rule
     r"(?i)(?:^|\n)coj issue:": "COJ",      # Explicit rule
+    r"(?i)(?:^|\n)aj issue:": "AJ",      # Explicit rule
 }
 
 # Default project key for issues that don't match any specific rules
@@ -63,7 +64,7 @@ class ProcessingConfig:
     @classmethod
     def from_env(cls) -> 'ProcessingConfig':
         """Load configuration from environment variables."""
-        load_dotenv()
+        load_dotenv(override=True)
         
         config_dict = {
             'base_url': os.getenv('JIRA_BASE_URL'),
@@ -83,4 +84,18 @@ class ProcessingConfig:
         if missing:
             raise ValueError(f"Missing required environment variables: {missing}")
         
-        return cls(**config_dict) 
+        config_instance = cls(**config_dict)
+        config_instance.print_config()
+        return config_instance
+    
+    def print_config(self):
+        """Print configuration settings with sensitive data masked."""
+        print("\n=== Configuration Settings ===")
+        print(f"JIRA Base URL: {self.base_url}")
+        print(f"JIRA Email: {self.email}")
+        print(f"Project Key: {self.project_key or 'Not set (using rules)'}")
+        print(f"OpenAI Model: {self.openai_model}")
+        print(f"Dry Run: {self.dry_run}")
+        print(f"Debug: {self.debug}")
+        print(f"Max Concurrent Requests: {self.max_concurrent_requests}")
+        print("==============================\n") 

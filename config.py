@@ -26,6 +26,7 @@ ISSUE_PATTERNS = [
     r"(?i)(?:^|\n)db issue:",        # "DB issue:" at start of line (case-insensitive)
     r"(?i)(?:^|\n)coj issue:",        # "Cojudge issue:" at start of line (case-insensitive)
     r"(?i)(?:^|\n)aj issue:",        # "Autojudge issue:" at start of line (case-insensitive)
+    r"(?i)(?:^|\n)New feature:",        # "Issue:" at start of line (case-insensitive)
 ]
 
 # Rule-based project mapping for specific issue patterns
@@ -35,6 +36,7 @@ ISSUE_PROJECT_RULES = {
     r"(?i)(?:^|\n)(bug):": "AP",      # Explicit rule
     r"(?i)(?:^|\n)coj issue:": "COJ",      # Explicit rule
     r"(?i)(?:^|\n)aj issue:": "AJ",      # Explicit rule
+    r"(?i)(?:^|\n)New feature:": "AP",      # Explicit rule
 }
 
 # Default project key for issues that don't match any specific rules

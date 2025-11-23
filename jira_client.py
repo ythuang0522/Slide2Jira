@@ -36,6 +36,7 @@ class AsyncJiraClient:
                 "issuetype": {"name": analysis.issue_type},
                 "summary": analysis.title[:200],
                 "description": self._create_adf_content(analysis.description),
+                "priority": {"name": analysis.priority},  # Set priority from AI analysis
                 "labels": labels,
             }
         }

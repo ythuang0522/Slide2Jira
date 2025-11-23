@@ -12,7 +12,7 @@ DEFAULT_IMAGE_SCALE = 1.5
 MIN_JPEG_QUALITY = 60
 
 # OpenAI constants
-DEFAULT_OPENAI_MODEL = 'gpt-4.1'
+DEFAULT_OPENAI_MODEL = 'gpt-5.1'
 DEFAULT_TIMEOUT = 30
 
 # Processing constants

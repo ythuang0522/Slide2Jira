@@ -48,6 +48,9 @@ class PDFConverter:
             if not pdf_path.exists():
                 raise RuntimeError(f"PDF conversion failed - output file not found: {pdf_path}")
             
+            if pdf_path.stat().st_size == 0:
+                raise RuntimeError(f"PDF conversion failed - output file is empty (0 bytes): {pdf_path}\nLibreOffice may have crashed. stderr: {result.stderr}")
+            
             logger.info(f"Successfully converted to: {pdf_path}")
             return str(pdf_path)
             

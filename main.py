@@ -54,6 +54,8 @@ def create_argument_parser():
                        help="Jira project key (overrides JIRA_PROJECT_KEY from .env and disables AI project determination)")
     parser.add_argument("-t", "--max-concurrent", type=int, default=MAX_CONCURRENT_REQUESTS,
                        help=f"Maximum concurrent API requests (default: {MAX_CONCURRENT_REQUESTS})")
+    parser.add_argument("--provider", choices=["openai", "gemini"], default=None,
+                       help="AI provider to use: 'openai' or 'gemini' (default: uses AI_PROVIDER env var or 'gemini')")
     
     return parser
 
@@ -68,7 +70,7 @@ async def async_main():
         return 1
     
     try:
-        config = ProcessingConfig.from_env()
+        config = ProcessingConfig.from_env(provider=args.provider)
         config.dry_run = args.dry_run
         config.debug = args.debug
         config.max_concurrent_requests = args.max_concurrent

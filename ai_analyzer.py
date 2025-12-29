@@ -138,17 +138,16 @@ class AsyncAIAnalyzer:
 Given a slide image, extract the following information for creating a Jira issue:
 
 1. **Title**: 簡潔的繁體中文標題描述問題，50字以內**.
-2. **Description**: 簡潔明瞭的描述問題，包含:
-   - What the primary issue is. 
-   - The primary issue is the sentence containing "Issue:" or "Bug:".
-   - There may be more than one primary issues on the slide. You need to list all of them.
-   - Explain the primary issue using related visible data, metrics, or evidence in the slide.
-   - Any proposed solutions or next steps mentioned related to the primary issue
-   - Sample ID and Chip ID if available. Do not include any other identifiers (e.g., Hospital ID, Seq ID, patient identifiers, internal tracking IDs).
-   - Other relevant information related to the primary issue or feature, explicitly excluding any identifiers beyond Sample ID and Chip ID
+2. **Description**: 簡潔明瞭的描述主要問題(Primary Issue)，包含:
+   - 理解該投影片所描述的主要問題，用專業的軟體工程術語，描述投影片中的主要問題 
+   - The primary issue is the sentence containing "Issue:" or "Bug:" or "DB issue:" or "COJ issue:" or "AJ issue:".
+   - There may be more than one issues on the slide. List all of them.
+   - Explain the issue using related visible data, metrics, or evidence in the slide.
+   - Any proposed solutions or next steps related to the primary issue if mentioned.
+   - List Sample ID and Chip ID at the end of the description if available. Do not include any other identifiers (e.g., Hospital ID, Seq ID, patient identifiers, internal tracking IDs).
    **務必用繁體中文輸出描述，英文縮寫和專有名詞可保留英文**.
 
-3. **Priority**: the priority of the issue (High/Medium/Low) if mentioned in the slide. If not mentioned, use **Medium**.
+3. **Priority**: the priority of the primary issue (High/Medium/Low) if mentioned. If not mentioned, use **Medium**.
 4. **Issue Type**: Categorize as Bug or Task based on content, if not clear, use Task as default.
 5. **Labels**: Add upto two most relevant labels to the issue.
 

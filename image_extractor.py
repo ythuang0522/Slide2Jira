@@ -3,7 +3,7 @@
 import io
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import fitz  # PyMuPDF
 from PIL import Image
@@ -19,19 +19,24 @@ class ImageExtractor:
     def __init__(self, config: ProcessingConfig):
         self.config = config
     
-    def extract_slide_images(self, pdf_path: str, slide_numbers: List[int], output_dir: str) -> Dict[int, str]:
-        """Extract specific slides from PDF as optimized JPEG images."""
+    def extract_slide_images(self, pdf_path: str, slide_page_mapping: Dict[int, int], output_dir: str) -> Dict[int, str]:
+        """Extract slide images using an explicit PPTX slide to PDF page mapping."""
         slide_images = {}
         
         try:
             doc = fitz.open(pdf_path)
             logger.info(f"PDF has {len(doc)} pages")
             
-            for slide_num in slide_numbers:
-                page_index = slide_num - 1
+            for slide_num, pdf_page_num in sorted(slide_page_mapping.items()):
+                page_index = pdf_page_num - 1
                 
                 if page_index >= len(doc):
-                    logger.warning(f"Slide {slide_num} not found in PDF (only {len(doc)} pages)")
+                    logger.warning(
+                        "Slide %s expects PDF page %s, but PDF only has %s pages",
+                        slide_num,
+                        pdf_page_num,
+                        len(doc),
+                    )
                     continue
                 
                 img_path = self._extract_single_slide(doc, slide_num, page_index, output_dir)

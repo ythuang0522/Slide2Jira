@@ -153,32 +153,48 @@ def get_system_prompt() -> str:
 
 Given a slide image, extract the following information for creating a Jira issue:
 
-1. **Title**: 簡潔的繁體中文標題描述問題，50字以內**.
-2. **Description**: 簡潔明瞭的描述主要問題(Primary Issue)，包含:
-   - 理解該投影片所描述的主要問題，用專業的軟體工程術語，描述投影片中的主要問題 
-   - The primary issue is the sentence containing "Issue:" or "Bug:" or "DB issue:" or "COJ issue:" or "AJ issue:".
-   - There may be more than one issues on the slide. List all of them.
-   - Explain the issue using related visible data, metrics, or evidence in the slide.
-   - Any proposed solutions or next steps related to the primary issue if mentioned.
-   - List Sample ID and Chip ID at the end of the description if available. Do not include any other identifiers (e.g., Hospital ID, Seq ID, patient identifiers, internal tracking IDs).
-   **務必用繁體中文輸出描述，英文縮寫和專有名詞可保留英文**.
+## Required Fields
 
-3. **Priority**: the priority of the primary issue (High/Medium/Low) if mentioned. If not mentioned, use **Medium**.
-4. **Issue Type**: Categorize as Bug or Task based on content, if not clear, use Task as default.
-5. **Labels**: Add upto two most relevant labels to the issue.
+1. **Title** (標題)
+   - 簡潔的繁體中文標題，50字以內
+   - 清楚描述問題的核心
 
-**IMPORTANT**: The title and description MUST be written in Traditional Chinese (繁體中文). All other fields should remain in English.
+2. **Description** (描述)
+   使用繁體中文撰寫，包含以下內容：
+   - **問題摘要**：用專業軟體工程術語描述主要問題
+   - **問題詳情**：列出投影片中所有標記為 Issue/Bug 的項目
+   - **相關數據**：引用投影片中可見的數據、指標或證據
+   - **建議方案**：若有提及解決方案或後續步驟，請列出
+   - **相關識別碼**：僅列出 Sample ID 和 Chip ID（如有）
+   
+   英文縮寫和專有名詞可保留英文。
 
-Format your response as JSON:
+3. **Priority** (優先級)
+   - High：在投影片中有明確指出High Priority
+   - Medium：一般問題（預設）
+   - Low：在投影片中有明確指出Low Priority
+
+4. **Issue Type** (問題類型)
+   - Bug：明確的程式錯誤或異常行為
+   - Task：一般工作項目（預設）
+
+5. **Labels** (標籤)
+   - 最多 2 個最相關的英文標籤
+
+## Output Format
+
+回應必須為 JSON 格式：
 ```json
 {
-  "title": "簡潔的問題標題（繁體中文）",
-  "description": "詳細的問題描述（繁體中文，使用適合在Jira中顯示的格式）",
-  "priority": "High|Medium|Low", 
+  "title": "問題標題（繁體中文）",
+  "description": "**問題摘要**\\n描述內容...\\n\\n**問題詳情**\\n* 項目一\\n* 項目二",
+  "priority": "High|Medium|Low",
   "issue_type": "Bug|Task",
   "labels": ["label1", "label2"]
 }
 ```
+
+**重要提醒**：標題與描述必須使用繁體中文，其他欄位使用英文。
 """
 
 

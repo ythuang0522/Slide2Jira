@@ -65,20 +65,23 @@ class AsyncPowerPointToJiraProcessor:
                 
                 # Extract slide numbers and project mappings
                 slide_project_mapping = {}
+                slide_pdf_mapping = {}
                 issue_slide_numbers = []
-                for idx, slide, project_key in issue_slides:
-                    issue_slide_numbers.append(idx)
-                    slide_project_mapping[idx] = project_key
-                
+                for issue_slide in issue_slides:
+                    issue_slide_numbers.append(issue_slide.pptx_slide_number)
+                    slide_project_mapping[issue_slide.pptx_slide_number] = issue_slide.project_key
+                    slide_pdf_mapping[issue_slide.pptx_slide_number] = issue_slide.pdf_page_number
+
                 logger.info(f"Found {len(issue_slide_numbers)} issue slides: {issue_slide_numbers}")
                 logger.info(f"Project mapping: {slide_project_mapping}")
+                logger.info(f"PDF page mapping: {slide_pdf_mapping}")
                 
                 # Step 2: Convert to PDF (synchronous)
                 pdf_path = self.pdf_converter.convert_to_pdf(pptx_path, workdir)
                 
                 # Step 3: Extract slide images (synchronous)
                 slide_images = self.image_extractor.extract_slide_images(
-                    pdf_path, issue_slide_numbers, workdir
+                    pdf_path, slide_pdf_mapping, workdir
                 )
                 
                 # Step 4: Analyze all slides in parallel (asynchronous)

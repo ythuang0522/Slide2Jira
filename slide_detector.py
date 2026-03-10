@@ -1,13 +1,23 @@
 """Slide detection functionality."""
 
-import re
 import logging
-from typing import List, Generator, Tuple, Optional
+import re
+from dataclasses import dataclass
+from typing import Generator, List, Optional
 from pptx import Presentation
 
 from config import ISSUE_PATTERNS, ISSUE_PROJECT_RULES, DEFAULT_PROJECT_KEY
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class IssueSlideReference:
+    """Coordinates for an issue slide across the PPTX and exported PDF."""
+
+    pptx_slide_number: int
+    pdf_page_number: int
+    project_key: str
 
 
 class SlideDetector:
@@ -16,20 +26,50 @@ class SlideDetector:
     def __init__(self, patterns: List[str] = None):
         self.patterns = patterns or ISSUE_PATTERNS
     
-    def find_issue_slides(self, pptx_path: str) -> Generator[Tuple[int, object, Optional[str]], None, None]:
-        """Generator that yields issue slides with slide index (1-based), slide object, and determined project key."""
+    def find_issue_slides(self, pptx_path: str) -> Generator[IssueSlideReference, None, None]:
+        """Yield issue slides with PPTX numbering and exported PDF page numbering."""
         try:
             prs = Presentation(pptx_path)
             logger.info(f"Processing {len(prs.slides)} slides from {pptx_path}")
-            
+
+            visible_slide_number = 0
+
             for idx, slide in enumerate(prs.slides, start=1):
+                is_hidden = self._is_hidden(slide)
+                if not is_hidden:
+                    visible_slide_number += 1
+
                 project_key = self._detect_issue_and_project(slide)
                 if project_key is not None:  # Found an issue
-                    logger.info(f"Found issue slide: {idx} → project: {project_key}")
-                    yield idx, slide, project_key
+                    if is_hidden:
+                        logger.warning(
+                            "Skipping hidden issue slide %s because hidden slides are not exported to PDF",
+                            idx,
+                        )
+                        continue
+
+                    logger.info(
+                        "Found issue slide: pptx=%s pdf=%s → project: %s",
+                        idx,
+                        visible_slide_number,
+                        project_key,
+                    )
+                    yield IssueSlideReference(
+                        pptx_slide_number=idx,
+                        pdf_page_number=visible_slide_number,
+                        project_key=project_key,
+                    )
         except Exception as e:
             logger.error(f"Error processing presentation: {e}")
             raise
+
+    def _is_hidden(self, slide) -> bool:
+        """Return True when a slide is marked hidden in the PPTX XML."""
+        show_attr = slide._element.get("show")
+        if show_attr is None:
+            return False
+
+        return str(show_attr).strip().lower() in {"0", "false"}
     
     def _detect_issue_and_project(self, slide) -> Optional[str]:
         """Detect issue slides and determine project key based on text patterns."""

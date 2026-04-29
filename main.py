@@ -27,6 +27,9 @@ logger = logging.getLogger(__name__)
 def print_results(results: List[SlideAnalysis], dry_run: bool = False):
     """Print processing results in a formatted way."""
     logger.info(f"Processed {len(results)} issue slides")
+    total_input_tokens = sum(result.input_tokens for result in results)
+    total_output_tokens = sum(result.output_tokens for result in results)
+    total_tokens = sum(result.total_tokens for result in results)
     
     for result in results:
         print(f"\n{'='*60}")
@@ -34,10 +37,24 @@ def print_results(results: List[SlideAnalysis], dry_run: bool = False):
         print(f"Project: {result.project_key}")
         print(f"Priority: {result.priority}")
         print(f"Type: {result.issue_type}")
+        if result.total_tokens:
+            print(
+                "Image recognition tokens: "
+                f"input={result.input_tokens}, output={result.output_tokens}, total={result.total_tokens}"
+            )
         if not dry_run and result.jira_key:
             print(f"Jira Issue: {result.jira_key}")
         print(f"Description:\n{result.description}")
         print(f"Labels: {', '.join(result.labels)}")
+
+    if total_tokens:
+        print(f"\n{'='*60}")
+        print("Token Usage Summary")
+        print(
+            "Image recognition total: "
+            f"input={total_input_tokens}, output={total_output_tokens}, total={total_tokens}"
+        )
+        print("Jira ticket creation total: 0 tokens (Jira REST API call, no LLM usage)")
 
 
 def create_argument_parser():

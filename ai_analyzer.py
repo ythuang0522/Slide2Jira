@@ -27,6 +27,18 @@ class SlideAnalysis:
     labels: List[str] = field(default_factory=list)
     project_key: Optional[str] = None  # Pre-determined by SlideDetector or config-specified
     jira_key: Optional[str] = None
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
+
+
+@dataclass
+class AIAnalysisResponse:
+    """Raw AI response content plus token accounting."""
+    content: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
 
 
 class BaseAIClient(ABC):
@@ -36,7 +48,7 @@ class BaseAIClient(ABC):
         self.config = config
     
     @abstractmethod
-    async def analyze_image(self, base64_image: str, slide_num: int) -> str:
+    async def analyze_image(self, base64_image: str, slide_num: int) -> AIAnalysisResponse:
         """Analyze an image and return the raw response content."""
         pass
     
@@ -69,7 +81,7 @@ class OpenAIClient(BaseAIClient):
     def model_name(self) -> str:
         return self.config.openai_model
     
-    async def analyze_image(self, base64_image: str, slide_num: int) -> str:
+    async def analyze_image(self, base64_image: str, slide_num: int) -> AIAnalysisResponse:
         """Analyze an image using OpenAI's Chat API."""
         system_prompt = get_system_prompt()
         user_prompt = f"Analyze this slide (slide #{slide_num}) and extract issue information according to the format specified."
@@ -94,7 +106,23 @@ class OpenAIClient(BaseAIClient):
                 }
             ]
         )
-        return response.choices[0].message.content
+        usage = response.usage
+        input_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
+        output_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
+        total_tokens = getattr(usage, "total_tokens", 0) if usage else input_tokens + output_tokens
+        logger.info(
+            "OpenAI token usage for slide %s: input=%s, output=%s, total=%s",
+            slide_num,
+            input_tokens,
+            output_tokens,
+            total_tokens
+        )
+        return AIAnalysisResponse(
+            content=response.choices[0].message.content,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens
+        )
 
 
 class GeminiClient(BaseAIClient):
@@ -113,7 +141,7 @@ class GeminiClient(BaseAIClient):
     def model_name(self) -> str:
         return self.config.gemini_model
     
-    async def analyze_image(self, base64_image: str, slide_num: int) -> str:
+    async def analyze_image(self, base64_image: str, slide_num: int) -> AIAnalysisResponse:
         """Analyze an image using Google Gemini API."""
         from google.genai import types
         
@@ -144,7 +172,24 @@ class GeminiClient(BaseAIClient):
             )
         )
         
-        return response.text
+        usage = getattr(response, "usage_metadata", None)
+        input_tokens = getattr(usage, "prompt_token_count", 0) if usage else 0
+        output_tokens = getattr(usage, "candidates_token_count", 0) if usage else 0
+        total_tokens = getattr(usage, "total_token_count", 0) if usage else input_tokens + output_tokens
+        if total_tokens:
+            logger.info(
+                "Gemini token usage for slide %s: input=%s, output=%s, total=%s",
+                slide_num,
+                input_tokens,
+                output_tokens,
+                total_tokens
+            )
+        return AIAnalysisResponse(
+            content=response.text,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens
+        )
 
 
 def get_system_prompt() -> str:
@@ -227,8 +272,8 @@ class AsyncAIAnalyzer:
         """Analyze slide image using AI API to extract issue details."""
         try:
             base64_image = await self._encode_image_base64_async(image_path)
-            content = await self.ai_client.analyze_image(base64_image, slide_num)
-            analysis_dict = self._parse_response(content, slide_num)
+            ai_response = await self.ai_client.analyze_image(base64_image, slide_num)
+            analysis_dict = self._parse_response(ai_response.content, slide_num)
             
             # Use manual override or pre-determined project key
             if self.manual_project_key:
@@ -245,7 +290,10 @@ class AsyncAIAnalyzer:
                 priority=analysis_dict.get('priority', 'Medium'),
                 issue_type=analysis_dict.get('issue_type', 'Task'),
                 labels=analysis_dict.get('labels', []),
-                project_key=project_key
+                project_key=project_key,
+                input_tokens=ai_response.input_tokens,
+                output_tokens=ai_response.output_tokens,
+                total_tokens=ai_response.total_tokens
             )
             
         except Exception as e:

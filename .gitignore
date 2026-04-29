@@ -178,6 +178,7 @@ Desktop.ini
 *_debug/
 
 # Project specific
+Slides
 *.pptx
 *.pdf
 *.png

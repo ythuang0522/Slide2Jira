@@ -15,6 +15,8 @@ from config import ProcessingConfig, AIProvider
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_JIRA_ISSUE_TYPE = "Task"
+
 
 @dataclass
 class SlideAnalysis:
@@ -23,7 +25,7 @@ class SlideAnalysis:
     title: str
     description: str
     priority: str = "Medium"
-    issue_type: str = "Task"
+    issue_type: str = DEFAULT_JIRA_ISSUE_TYPE
     labels: List[str] = field(default_factory=list)
     project_key: Optional[str] = None  # Pre-determined by SlideDetector or config-specified
     jira_key: Optional[str] = None
@@ -219,11 +221,7 @@ Given a slide image, extract the following information for creating a Jira issue
    - Medium：一般問題（預設）
    - Low：在投影片中有明確指出Low Priority
 
-4. **Issue Type** (問題類型)
-   - Bug：明確的程式錯誤或異常行為
-   - Task：一般工作項目（預設）
-
-5. **Labels** (標籤)
+4. **Labels** (標籤)
    - 最多 2 個最相關的英文標籤
 
 ## Output Format
@@ -234,7 +232,6 @@ Given a slide image, extract the following information for creating a Jira issue
   "title": "問題標題（繁體中文）",
   "description": "**問題摘要**\\n描述內容...\\n\\n**問題詳情**\\n* 項目一\\n* 項目二",
   "priority": "High|Medium|Low",
-  "issue_type": "Bug|Task",
   "labels": ["label1", "label2"]
 }
 ```
@@ -288,7 +285,7 @@ class AsyncAIAnalyzer:
                 title=analysis_dict.get('title', f'Issue from Slide {slide_num}'),
                 description=analysis_dict.get('description', ''),
                 priority=analysis_dict.get('priority', 'Medium'),
-                issue_type=analysis_dict.get('issue_type', 'Task'),
+                issue_type=DEFAULT_JIRA_ISSUE_TYPE,
                 labels=analysis_dict.get('labels', []),
                 project_key=project_key,
                 input_tokens=ai_response.input_tokens,
@@ -351,6 +348,5 @@ class AsyncAIAnalyzer:
                 "title": f"Issue from Slide {slide_num}",
                 "description": content,
                 "priority": "Medium",
-                "issue_type": "Task",
                 "labels": [f"slide-{slide_num}"]
             }

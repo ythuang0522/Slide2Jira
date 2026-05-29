@@ -30,23 +30,27 @@ PDF_CONVERSION_TIMEOUT = 120
 MAX_CONCURRENT_REQUESTS = 5
 
 # Issue detection patterns
+ISSUE_LINE_PREFIX = r"(?im)^\s*(?:[\u2022*\-]\s*)?"
+
 ISSUE_PATTERNS = [
-    r"(?i)(?:^|\n)issue:",           # "Issue:" at start of line (case-insensitive)
-    r"(?i)(?:^|\n)(bug):",           # "Bug:" at start of line (case-insensitive)
-    r"(?i)(?:^|\n)db issue:",        # "DB issue:" at start of line (case-insensitive)
-    r"(?i)(?:^|\n)coj issue:",        # "Cojudge issue:" at start of line (case-insensitive)
-    r"(?i)(?:^|\n)aj issue:",        # "Autojudge issue:" at start of line (case-insensitive)
-    r"(?i)(?:^|\n)New feature:",        # "Issue:" at start of line (case-insensitive)
+    rf"{ISSUE_LINE_PREFIX}issue:",        # "Issue:" at start of line (case-insensitive)
+    rf"{ISSUE_LINE_PREFIX}bug:",          # "Bug:" at start of line (case-insensitive)
+    rf"{ISSUE_LINE_PREFIX}db issue:",     # "DB issue:" at start of line (case-insensitive)
+    rf"{ISSUE_LINE_PREFIX}coj issue:",    # "Cojudge issue:" at start of line (case-insensitive)
+    rf"{ISSUE_LINE_PREFIX}aj issue:",     # "Autojudge issue:" at start of line (case-insensitive)
+    rf"{ISSUE_LINE_PREFIX}ar issue:",     # "AR issue:" at start of line (case-insensitive)
+    rf"{ISSUE_LINE_PREFIX}new feature:",  # "New feature:" at start of line (case-insensitive)
 ]
 
 # Rule-based project mapping for specific issue patterns
 ISSUE_PROJECT_RULES = {
-    r"(?i)(?:^|\n)db issue:": "DB",
-    r"(?i)(?:^|\n)issue:": "AP",      # Explicit rule
-    r"(?i)(?:^|\n)(bug):": "AP",      # Explicit rule
-    r"(?i)(?:^|\n)coj issue:": "COJ",      # Explicit rule
-    r"(?i)(?:^|\n)aj issue:": "AJ",      # Explicit rule
-    r"(?i)(?:^|\n)New feature:": "AP",      # Explicit rule
+    rf"{ISSUE_LINE_PREFIX}db issue:": "DB",
+    rf"{ISSUE_LINE_PREFIX}issue:": "AP",        # Explicit rule
+    rf"{ISSUE_LINE_PREFIX}bug:": "AP",          # Explicit rule
+    rf"{ISSUE_LINE_PREFIX}coj issue:": "COJ",   # Explicit rule
+    rf"{ISSUE_LINE_PREFIX}aj issue:": "AJ",     # Explicit rule
+    rf"{ISSUE_LINE_PREFIX}ar issue:": "AR",     # Explicit rule
+    rf"{ISSUE_LINE_PREFIX}new feature:": "AP",  # Explicit rule
 }
 
 # Default project key for issues that don't match any specific rules

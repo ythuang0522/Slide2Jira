@@ -2,7 +2,7 @@ import io
 import unittest
 from contextlib import redirect_stdout
 
-from ai_analyzer import AIAnalysisResponse, AsyncAIAnalyzer, SlideAnalysis
+from ai_analyzer import AIAnalysisResponse, AsyncAIAnalyzer, SlideAnalysis, get_system_prompt
 from config import AIProvider, ProcessingConfig
 from config import DEFAULT_OPENAI_MODEL
 from main import print_results
@@ -14,7 +14,20 @@ class FakeAIClient:
 
     async def analyze_image(self, base64_image, slide_num):
         return AIAnalysisResponse(
-            content='{"title": "測試", "description": "描述", "priority": "Medium", "issue_type": "Task", "labels": []}',
+            content='{"title": "測試", "description": "描述", "priority": "Medium", "labels": []}',
+            input_tokens=10,
+            output_tokens=5,
+            total_tokens=15,
+        )
+
+
+class FakeBugAIClient:
+    provider_name = "Fake"
+    model_name = "fake-model"
+
+    async def analyze_image(self, base64_image, slide_num):
+        return AIAnalysisResponse(
+            content='{"title": "測試", "description": "描述", "priority": "Medium", "issue_type": "Bug", "labels": []}',
             input_tokens=10,
             output_tokens=5,
             total_tokens=15,
@@ -28,6 +41,12 @@ async def fake_encode_image_base64(image_path):
 class TokenUsageOutputTest(unittest.TestCase):
     def test_default_openai_model_is_gpt_55(self):
         self.assertEqual(DEFAULT_OPENAI_MODEL, "gpt-5.5")
+
+    def test_prompt_does_not_request_issue_type_from_ai(self):
+        prompt = get_system_prompt()
+
+        self.assertNotIn('"issue_type"', prompt)
+        self.assertNotIn("Issue Type", prompt)
 
     def test_print_results_includes_image_and_jira_token_totals(self):
         results = [
@@ -80,9 +99,29 @@ class AnalyzerTokenUsageTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result.title, "測試")
         self.assertEqual(result.project_key, "AP")
+        self.assertEqual(result.issue_type, "Task")
         self.assertEqual(result.input_tokens, 10)
         self.assertEqual(result.output_tokens, 5)
         self.assertEqual(result.total_tokens, 15)
+
+    async def test_analyzer_always_uses_task_issue_type(self):
+        config = ProcessingConfig(
+            base_url="https://jira.example.com",
+            email="test@example.com",
+            api_token="token",
+            ai_provider=AIProvider.GEMINI,
+            gemini_api_key="gemini-key",
+        )
+        analyzer = AsyncAIAnalyzer.__new__(AsyncAIAnalyzer)
+        analyzer.config = config
+        analyzer.ai_client = FakeBugAIClient()
+        analyzer.manual_project_key = None
+        analyzer._encode_image_base64_async = fake_encode_image_base64
+
+        result = await analyzer.analyze_slide("slide.png", 3, "AR")
+
+        self.assertEqual(result.project_key, "AR")
+        self.assertEqual(result.issue_type, "Task")
 
 
 if __name__ == "__main__":

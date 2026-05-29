@@ -12,9 +12,12 @@ When `JIRA_PROJECT_KEY` is not specified, the system uses simple text pattern ma
 | Starts with "DB issue:"     | **DB**  | "DB issue: Streptococcus sobrinus low ANI"|
 | Starts with "Coj issue:"    | **COJ** | "Coj issue: Judging error"                |
 | Starts with "AJ issue:"     | **AJ**  | "AJ issue: Timeout on test case"          |
+| Starts with "AR issue:"     | **AR**  | "AR issue: Report rendering error"        |
 | Starts with "Issue:"        | **AP**  | "Issue: Pipeline performance slow"        |
 | Starts with "Bug:"          | **AP**  | "Bug: Memory leak in pipeline"            |
 | All other patterns          | **AP**  | "Issue: Frontend bug in login form"       |
+
+Detected slides are created as Jira `Task` issues. `Bug:` is a slide marker for detection and routing only.
 
 ## 🔧 Usage
 
@@ -148,12 +151,13 @@ The tool automatically detects slides that contain issues using these patterns:
 | `DB issue:`       | Lines starting with "DB issue:" (case-insensitive) | "DB issue: Streptococcus sobrinus low ANI"|
 | `Coj issue:`      | Lines starting with "Coj issue:" (case-insensitive) | "Coj issue: Judging error"                |
 | `AJ issue:`       | Lines starting with "AJ issue:" (case-insensitive)  | "AJ issue: Timeout on test case"          |
+| `AR issue:`       | Lines starting with "AR issue:" (case-insensitive)  | "AR issue: Report rendering error"        |
 
 **Detection Logic:**
 - Scans all text shapes in each slide
 - Uses regex pattern matching for reliable detection
 - Case-insensitive matching for flexibility
-- Must appear at the beginning of a line (^ anchor)
+- Must appear at the beginning of a line after optional whitespace or a slide bullet
 
 ```mermaid
 flowchart LR
@@ -183,11 +187,12 @@ To add project-specific rules, modify `config.py`:
 
 ```python
 ISSUE_PROJECT_RULES = {
-    r"(?i)(?:^|\n)db issue:": "DB",      # Database issues
-    r"(?i)(?:^|\n)coj issue:": "COJ",    # Cojudge issues
-    r"(?i)(?:^|\n)aj issue:": "AJ",      # Autojudge issues
-    r"(?i)(?:^|\n)issue:": "AP",         # General issues
-    r"(?i)(?:^|\n)(bug):": "AP",         # Bugs
+    rf"{ISSUE_LINE_PREFIX}db issue:": "DB",     # Database issues
+    rf"{ISSUE_LINE_PREFIX}coj issue:": "COJ",   # Cojudge issues
+    rf"{ISSUE_LINE_PREFIX}aj issue:": "AJ",     # Autojudge issues
+    rf"{ISSUE_LINE_PREFIX}ar issue:": "AR",     # AR issues
+    rf"{ISSUE_LINE_PREFIX}issue:": "AP",        # General issues
+    rf"{ISSUE_LINE_PREFIX}bug:": "AP",          # Bugs
 }
 
 DEFAULT_PROJECT_KEY = "AP"  # Fallback for unmatched patterns

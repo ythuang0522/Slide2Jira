@@ -24,26 +24,35 @@ class ImageExtractor:
         slide_images = {}
         
         try:
-            doc = fitz.open(pdf_path)
-            logger.info(f"PDF has {len(doc)} pages")
-            
-            for slide_num, pdf_page_num in sorted(slide_page_mapping.items()):
-                page_index = pdf_page_num - 1
-                
-                if page_index >= len(doc):
-                    logger.warning(
-                        "Slide %s expects PDF page %s, but PDF only has %s pages",
-                        slide_num,
-                        pdf_page_num,
-                        len(doc),
+            with fitz.open(pdf_path) as doc:
+                page_count = len(doc)
+                logger.info(f"PDF has {page_count} pages")
+
+                invalid_mappings = [
+                    (slide_num, pdf_page_num)
+                    for slide_num, pdf_page_num in sorted(slide_page_mapping.items())
+                    if pdf_page_num < 1 or pdf_page_num > page_count
+                ]
+                if invalid_mappings:
+                    details = "; ".join(
+                        f"PPTX slide {slide_num} expects PDF page {pdf_page_num}, "
+                        f"but PDF only has {page_count} page(s)"
+                        for slide_num, pdf_page_num in invalid_mappings
                     )
-                    continue
-                
-                img_path = self._extract_single_slide(doc, slide_num, page_index, output_dir)
-                if img_path:
+                    raise ValueError(f"Invalid PDF page mapping: {details}")
+
+                for slide_num, pdf_page_num in sorted(slide_page_mapping.items()):
+                    page_index = pdf_page_num - 1
+                    img_path = self._extract_single_slide(
+                        doc, slide_num, page_index, output_dir
+                    )
+                    if not img_path:
+                        raise RuntimeError(
+                            f"Failed to extract PPTX slide {slide_num} "
+                            f"from PDF page {pdf_page_num}"
+                        )
                     slide_images[slide_num] = img_path
-            
-            doc.close()
+
             return slide_images
             
         except Exception as e:

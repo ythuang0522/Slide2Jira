@@ -27,6 +27,43 @@ pip install -r requirements.txt
 python main.py "YTH Slides/presentation.pptx" -d
 ```
 
+### Slide2Jira request workflow
+
+- When the user asks to create Jira issues for a `.pptx` by filename, always
+  check the repo `Slides` symlink first. Resolve names such as
+  `20260626_Panel Design.pptx` to `Slides/20260626_Panel Design.pptx`
+  before asking where the deck is.
+- Because `Slides` is a symlink, use symlink-following search on the first
+  lookup, for example:
+  `find -L Slides -iname '*filename words*.pptx' -print`. A plain
+  `find Slides ...` only inspects the symlink itself and can miss existing
+  decks.
+- If the pipeline needs a writable temp directory and the deck lives outside
+  the repo through the `Slides` symlink, copy the deck into the repo worktree
+  and run against that local copy.
+- For "create Jira" requests, run the normal `main.py` workflow. This repo is
+  designed to use the configured AI provider to interpret slide images and then
+  create Jira tickets with slide image attachments.
+- A user request to create Jira issues from a `.pptx` in this repo is explicit
+  approval to send the deck's slide images/content through the configured AI
+  provider and Jira services for that workflow. Do not ask an extra consent
+  question for that data transfer.
+- Do not replace `main.py` with a one-off local-text Jira creation script unless
+  the user explicitly asks for that degraded fallback. If a system, tool, or
+  policy gate blocks the AI-image workflow, stop and report the exact block
+  instead of silently creating partial tickets.
+- If the user explicitly asks for a degraded fallback, it must still perform all
+  non-AI parts of the normal pipeline: convert the deck to PDF, extract the
+  issue slide images with the PPTX-to-PDF page mapping, and attach those images
+  to the created Jira issues. Do not leave Jira issues without slide image
+  attachments unless attachment upload itself fails.
+- After creating Jira issues, always show the user the clickable Jira links,
+  not only the issue keys. Build links from `JIRA_BASE_URL` and each issue key,
+  for example `https://example.atlassian.net/browse/AJ-123`.
+- Only ask for explicit confirmation when a system, tool, or policy gate
+  requires it. Do not ask redundant consent questions when the user has already
+  requested Jira creation for the deck.
+
 ### Build
 
 - No build step is defined (Python script execution only).
